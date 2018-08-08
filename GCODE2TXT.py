@@ -1,21 +1,7 @@
-import sys
-
 import os
-from PyQt5 import QtWidgets, uic
-from ui_gui import Ui_MainWindow
-import matplotlib.pyplot as plt
-import re
-from mpl_toolkits.mplot3d import axes3d
 
-# from pars_fanuc_v02 import Parser_Fanuc
 
 class GCODE2TXT_Parser(object):
-
-
-
-
-
-
 
     def parseFile(self):
 
@@ -55,8 +41,3 @@ class GCODE2TXT_Parser(object):
 
         self.textBrowser.append(f"file: {self.filename} successfully parsed to {filename}")
 
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    window = GUI()
-    sys.exit(app.exec_())
