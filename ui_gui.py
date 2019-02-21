@@ -71,6 +71,15 @@ class Ui_MainWindow(object):
         self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_2.addWidget(self.label_2)
+
+        self.label_7 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.label_7.setObjectName("label_7")
+        self.horizontalLayout_2.addWidget(self.label_7)
+
+        self.lineEdit2 = QtWidgets.QLineEdit(self.verticalLayoutWidget_3)
+        self.lineEdit2.setObjectName("lineEdit_Punkte")
+        self.horizontalLayout_2.addWidget(self.lineEdit2)
+
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.button_parse1 = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
@@ -92,6 +101,9 @@ class Ui_MainWindow(object):
         self.label_3 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
         self.label_3.setObjectName("label_3")
         self.horizontalLayout_3.addWidget(self.label_3)
+
+
+
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
         self.button_parse2 = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
@@ -149,6 +161,8 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "GCODE -> TXT"))
         self.button_parse1.setText(_translate("MainWindow", "parse GCODE -> TXT"))
         self.label_3.setText(_translate("MainWindow", "TXT -> LS"))
+        self.label_7.setText(_translate("MainWindow", "  |  Punktebegrenzung: "))
+        self.lineEdit2.setText(_translate("MainWindow", "3000"))
         self.button_parse2.setText(_translate("MainWindow", "parse TXT -> LS"))
         self.label_5.setText(_translate("MainWindow", "extra functions"))
         self.button_showGraph.setText(_translate("MainWindow", "show Graph"))

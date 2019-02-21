@@ -7,14 +7,25 @@ class Parser_Fanuc(object):
 
     def __init__(self, filepath: object = None, textBrowser: object = None) -> object:
         self.filepath = filepath
+        print(filepath)
         if self.filepath is not None:
-            index = self.filepath.rindex("/")
+            if "\\" in self.filepath:
+                index = self.filepath.rindex("\\")
+            else:
+                index = self.filepath.rindex("/")
+
             self.filename = self.filepath[index + 1:]
             self.dirpath = self.filepath[:index]
+
+            file_name, file_type = self.filename.split(".")
+            # if "\\" in self.filepath:
+            #     index2 = self.filepath.rindex("\\")
+            #     self.filename = self.filename[index2 + 1:]
+            self.name = f"{file_name}"
             # print(self. dirpath, self.filename)
         self.textBrowser = textBrowser
-        self.src = os.path.join(os.curdir, "src\\")
-        self.target = os.path.join(os.curdir, "target\\")
+        self.src = os.path.join(os.curdir, "src")
+        self.target = os.path.join(os.curdir, "target")
         self.last_x = None
         self.last_y = None
         self.last_z = None
@@ -27,7 +38,7 @@ class Parser_Fanuc(object):
         # self.last_cnt = None
         # self.path_control_style = None
         # self.last_weld_state = None
-        # self.last_job_nr = None
+        self.last_nr = 0
         self.output = None
         self.tail = None
 
@@ -76,14 +87,23 @@ class Parser_Fanuc(object):
         # generate list with header lines
         self.output = self.get_main_header()
 
+        lines = []
         input_file = open(filepath, mode="r")
-        for line in input_file:
+        [lines.append(line) for line in input_file]
+        input_file.close()
+
+        flag = "start"
+        for line in lines[:-1]:
             # check if comment or empty
             if line[0] == "#" or len(line) == 0 or line[:1] == "\n":
                 continue
             else:
-                self.parse_line(line)
-        input_file.close()
+                self.parse_line(line, flag)
+                if flag == "start":
+                    flag = "welding"
+        # parse the last line
+        flag = "stop"
+        self.parse_line(lines[-1], flag)
 
         # adding the lines to the output file
         for line in self.get_output_tail():
@@ -98,12 +118,11 @@ class Parser_Fanuc(object):
                     f"  UFRAME_NUM = 1",
                     f"  UTOOL_NUM = {utool_number}",
                     f"  COL GUARD ADJUST 150",
-                    f"",
-                    f"  PR[91] = PR[90]"]
+                    f""]
         return template
 
-    def parse_line(self, dataset):
-        print(dataset)
+    def parse_line(self, dataset, flag):
+        # print(dataset)
         nr, x, y, z, *_ = dataset.replace(" ", "").replace("\n", "").split(",")
         assert_border_xyz = 1000
         # assert_border_rxryrz = 45
@@ -117,6 +136,12 @@ class Parser_Fanuc(object):
         z = float(z)
         assert z <= assert_border_xyz and z >= 0
 
+        # if layer changes, then actualise from teached point to enable corrections in process
+        if nr != self.last_nr:
+            self.last_nr = nr
+            self.output.append(f"  ! -- Layer/Ebene {nr} -- !")
+            self.output.append(f"  PR[91] = PR[90]")
+
         if x != self.last_x:
             self.output.append(f"  PR[GP1:91,1] = PR[GP1:90,1] + {x:4.3f}")
         if y != self.last_y:
@@ -124,7 +149,27 @@ class Parser_Fanuc(object):
         if z != self.last_z:
             self.output.append(f"  PR[GP1:91,3] = PR[GP1:90,3] + {z:4.3f}")
 
-        self.output.append(f"L PR[91] 10mm/sec FINE")
+        if flag == "start":
+            self.output.append(f"  !Sicherheitspunkt!")
+            self.output.append(f"  PR[92] = PR[91]")
+            self.output.append(f"  PR[92] = PR[GP1:92,3] + 50")
+            self.output.append(f"J PR[92]")
+            self.output.append(f"  !Schweissanfang anfahren!")
+            self.output.append(f"L PR[91] R[100]mm/sec CNT100")
+            self.output.append(f"  CALL LASER_DRAHT_START")
+        elif flag == "welding":
+            self.output.append(f"L PR[91] R[100]mm/sec CNT100")
+        elif flag == "stop":
+            self.output.append(f"L PR[91] R[100]mm/sec CNT100 TB   .50sec,CALL END_PUD")
+            self.output.append(f"  DO[117:Laser Start]=OFF")
+            self.output.append(f"  !Sicherheitspunkt!")
+            self.output.append(f"  PR[92] = PR[91]")
+            self.output.append(f"  PR[92] = PR[GP1:92,3] + 50")
+            self.output.append(f"J PR[92]")
+            self.output.append(f"  WAIT   5.00(sec)")
+            self.output.append(f"  DO[119:Gas]=OFF")
+        else:
+            print(f"something is wrong with dataset: {dataset}")
 
         self.last_x = x
         self.last_y = y
@@ -138,13 +183,11 @@ class Parser_Fanuc(object):
 
     def generate_header(self, output, filename):
         '''generation of minimal header with '''
-        file_name, file_type = self.filename.split(".")
-        name = f"{file_name}"
         actual_time = datetime.datetime.today().strftime("%H:%M:%S")
         actual_day = datetime.datetime.today().strftime("%y-%m-%d")
         comment = f"{actual_day} {actual_time}"
 
-        header = [  f"/PROG  {name}",
+        header = [  f"/PROG  {self.name}",
                     f"/ATTR",
                     f'COMMENT\t= "{comment}";',
                     f"PROG_SIZE\t= 0;",

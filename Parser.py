@@ -5,21 +5,23 @@ from mpl_toolkits.mplot3d import axes3d
 
 import TXT2LS
 
+
 class Parser(object):
 
     def __init__(self, gui_instance=None):
         self.file_path_gcode = None
-        self.file_path_txt = None
         self.dir_path = None
         self.file_name = None
-
         self.dataset = []
+        self.file_list = []
         self.gui = gui_instance
 
-
     def loadFile(self, file_path=None):
-
-        index = file_path.rindex("/")
+        print(1, file_path)
+        if "\\" in file_path:
+            index = file_path.rindex("\\")
+        else:
+            index = file_path.rindex("/")
         self.file_name = file_path[index + 1:]
         self.dir_path = file_path[:index]
 
@@ -56,7 +58,6 @@ class Parser(object):
                     self.gui.button_showGraph.setDisabled(True)
                 # TODO: txt file loader
                 # self.load_data_from_txt(file)
-
 
             print(f"loading data from file {self.file_name}")
 
@@ -129,43 +130,84 @@ class Parser(object):
     def load_data_from_txt(self, file):
         pass
 
-    def generate_txt_file_from_dataset(self):
+    def generate_txt_file_from_dataset(self, target_points_per_file: int = 0):
+               
         if self.file_path_gcode is not None:
-            file_name, file_type = self.file_name.split(".")
-            file_name += ".txt"
-            self.file_path_txt = os.path.join(self.dir_path, file_name)
-            output_file = open(self.file_path_txt, mode="w")
-
-            output = ["#No.  X  Y  Z  Yaw  Pitch  Roll  Weld_En"]
 
             ds = self.dataset
 
             yaw = 0
             pitch = 0
-            roll = 1
-            weld_en = 1
+            roll = 0
+            weld_en = 0
 
-            for no, x, y, z in zip(ds[0], ds[1], ds[2], ds[3]):
-                data_set = [no, x, y, z, yaw, pitch, roll, weld_en]
+            file_counter = 0
+            point_counter = 0
+            #self.file_list = []
+            old_layer_number = 0
+
+            output_file, output = self.create_output_file(file_counter)
+
+            for layer_number, x, y, z in zip(ds[0], ds[1], ds[2], ds[3]):
+                data_set = [layer_number, x, y, z, yaw, pitch, roll, weld_en]
                 data_set_strings = [str(element) for element in data_set]
-
                 line = ", ".join(data_set_strings)
+                point_counter += 1
+
+                if layer_number != old_layer_number:
+                    old_layer_number = layer_number
+                    # if taget points is not 0, then split the points in multiple files with
+                    # AT LEAST the target point count
+                    if (point_counter > target_points_per_file) & (target_points_per_file != 0):
+                        self.write_txt_file(output_file, output)
+
+                        # create new file and output for it
+                        file_counter += 1
+                        point_counter = 0
+                        output_file, output = self.create_output_file(file_counter)
                 output.append(line)
 
-            for line in output:
-                output_file.write(f"{line}\n")
-            output_file.close()
-            if self.gui is not None:
-                self.gui.textBrowser_1.append(f"file: {self.file_name} successfully parsed to {file_name}")
-            else:
-                print(f"file: {self.file_name} successfully parsed to {file_name}")
+            # write last file
+            self.write_txt_file(output_file, output)
+
+    def create_output_file(self, split_number=0):
+        print("create output file")
+        file_name, file_type = self.file_name.split(".")
+        if split_number != 0:
+            file_name += str(split_number)
+        file_name += ".txt"
+        file_path_txt = os.path.join(self.dir_path, file_name)
+        output_file = open(file_path_txt, mode="w")
+        output = ["##No.  X  Y  Z  Yaw  Pitch  Roll  Weld_En"]
+        # save paths to the generated txt files
+        self.file_list.append(file_path_txt)
+        return output_file, output
+
+    def write_txt_file(self, output_file, output):
+        print("write txt file")
+        for line in output:
+            output_file.write(f"{line}\n")
+        output_file.close()
+        if self.gui is not None:
+            self.gui.textBrowser_1.append(f"file: {self.file_name} successfully parsed to {output_file}")
+        else:
+            print(f"file: {self.file_name} successfully parsed to {output_file}")
+
+
+        
+                
 
     def generate_ls_file_from_dataset(self):
-        if self.gui:
-            self.txt2ls = TXT2LS.Parser_Fanuc(self.file_path_txt, self.gui.textBrowser_2)
-        else:
-            self.txt2ls = TXT2LS.Parser_Fanuc(self.file_path_txt)
-        self.txt2ls.start()
+        
+        for path in self.file_list:
+
+            if self.gui:
+                self.txt2ls = TXT2LS.Parser_Fanuc(path, self.gui.textBrowser_2)
+            else:
+                self.txt2ls = TXT2LS.Parser_Fanuc(path)
+            self.txt2ls.start()
+        #self.file_list = []
+
 
     def show_graph(self):
         fig = plt.figure()
@@ -200,14 +242,15 @@ class Parser(object):
 
         fig2.add_subplot(224)
         plt.plot(x, y)
-        plt.xlabel("y")
+        plt.xlabel("x")
         plt.ylabel("y")
 
         plt.show()
 
 if __name__ == '__main__':
     parser = Parser()
-    parser.loadFile("D:/DESKTOP/PYTHON/A02_GCODE_PARSER/src/test_parallel.gcode")
+    parser.loadFile("D:/DESKTOP/PYTHON/A02_GCODE_PARSER/src/hosenrohr_oVersatz.gcode")
+    # parser.loadFile("D:\\DESKTOP\\PYTHON\\A02_GCODE_PARSER\\src\\hosenrohr_oVersatz.gcode")
     parser.show_graph()
     parser.generate_txt_file_from_dataset()
     parser.generate_ls_file_from_dataset()

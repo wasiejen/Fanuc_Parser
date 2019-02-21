@@ -2,7 +2,6 @@ import sys
 from PyQt5 import uic, QtWidgets, QtGui
 from ui_gui import Ui_MainWindow
 
-
 import Parser
 import TXT2LS
 
@@ -35,7 +34,7 @@ class GUI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def load_file(self):
         file_path, *_ = QtWidgets.QFileDialog.getOpenFileName()
-        print(file_path)
+        # print(file_path)
         self.lineEdit.setText(file_path)
         self.parser.loadFile(file_path=file_path)
 
@@ -43,7 +42,8 @@ class GUI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.parser.show_graph()
 
     def generate_txt_file(self):
-        self.parser.generate_txt_file_from_dataset()
+        target_points_per_file = int(self.lineEdit2.text())
+        self.parser.generate_txt_file_from_dataset(target_points_per_file)
         self.button_parse2.setDisabled(False)
 
     def generate_ls_file(self):
