@@ -143,16 +143,16 @@ class Parser_Fanuc(object):
             self.output.append(f"  PR[91] = PR[90]")
 
         if x != self.last_x:
-            self.output.append(f"  PR[GP1:91,1] = PR[GP1:90,1] + {x:4.3f}")
+            self.output.append(f"  PR[91,1] = PR[90,1] + {x:4.3f}")
         if y != self.last_y:
-            self.output.append(f"  PR[GP1:91,2] = PR[GP1:90,2] + {y:4.3f}")
+            self.output.append(f"  PR[91,2] = PR[90,2] + {y:4.3f}")
         if z != self.last_z:
-            self.output.append(f"  PR[GP1:91,3] = PR[GP1:90,3] + {z:4.3f}")
+            self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
 
         if flag == "start":
             #self.output.append(f"  !Sicherheitspunkt!")
             self.output.append(f"  PR[92] = PR[91]")
-            self.output.append(f"  PR[GP1:92,3] = PR[GP1:92,3] + 50")
+            self.output.append(f"  PR[92,3] = PR[92,3] + 50")
             self.output.append(f"J PR[92] 10% FINE")
             #self.output.append(f"  !Schweissanfang anfahren!")
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
@@ -164,7 +164,7 @@ class Parser_Fanuc(object):
             self.output.append(f"  DO[117:Laser Start]=OFF")
             #self.output.append(f"  !Sicherheitspunkt!")
             self.output.append(f"  PR[92] = PR[91]")
-            self.output.append(f"  PR[GP1:92,3] = PR[GP1:92,3] + 50")
+            self.output.append(f"  PR[92,3] = PR[92,3] + 50")
             self.output.append(f"J PR[92] 10% FINE")
             self.output.append(f"  WAIT   5.00(sec)")
             self.output.append(f"  DO[119:Gas]=OFF")
@@ -191,7 +191,7 @@ class Parser_Fanuc(object):
                     f"/ATTR",
                     f'COMMENT\t= "{comment}";',
                     f"PROG_SIZE\t= 0;",
-                    f"DEFAULT_GROUP\t= 1, 1, *, *, *;",
+                    f"DEFAULT_GROUP\t= 1, *, *, *, *;",
                     f"/APPL",
                     f"    ARC Welding Equipment: 1, *, *, *, *;",
                     f"/MN"
