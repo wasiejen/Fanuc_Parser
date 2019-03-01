@@ -139,7 +139,7 @@ class Parser_Fanuc(object):
         # if layer changes, then actualise from teached point to enable corrections in process
         if nr != self.last_nr:
             self.last_nr = nr
-            self.output.append(f"  ! -- Layer/Ebene {nr} -- !")
+            #self.output.append(f"  ! -- Layer/Ebene {nr} -- !")
             self.output.append(f"  PR[91] = PR[90]")
 
         if x != self.last_x:
@@ -150,11 +150,11 @@ class Parser_Fanuc(object):
             self.output.append(f"  PR[GP1:91,3] = PR[GP1:90,3] + {z:4.3f}")
 
         if flag == "start":
-            self.output.append(f"  !Sicherheitspunkt!")
+            #self.output.append(f"  !Sicherheitspunkt!")
             self.output.append(f"  PR[92] = PR[91]")
-            self.output.append(f"  PR[92] = PR[GP1:92,3] + 50")
-            self.output.append(f"J PR[92]")
-            self.output.append(f"  !Schweissanfang anfahren!")
+            self.output.append(f"  PR[GP1:92,3] = PR[GP1:92,3] + 50")
+            self.output.append(f"J PR[92] 10% FINE")
+            #self.output.append(f"  !Schweissanfang anfahren!")
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
             self.output.append(f"  CALL LASER_DRAHT_START")
         elif flag == "welding":
@@ -162,10 +162,10 @@ class Parser_Fanuc(object):
         elif flag == "stop":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100 TB   .50sec,CALL END_PUD")
             self.output.append(f"  DO[117:Laser Start]=OFF")
-            self.output.append(f"  !Sicherheitspunkt!")
+            #self.output.append(f"  !Sicherheitspunkt!")
             self.output.append(f"  PR[92] = PR[91]")
-            self.output.append(f"  PR[92] = PR[GP1:92,3] + 50")
-            self.output.append(f"J PR[92]")
+            self.output.append(f"  PR[GP1:92,3] = PR[GP1:92,3] + 50")
+            self.output.append(f"J PR[92] 10% FINE")
             self.output.append(f"  WAIT   5.00(sec)")
             self.output.append(f"  DO[119:Gas]=OFF")
         else:
