@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import uic, QtWidgets, QtGui
+from PyQt5 import QtWidgets  # , uic, QtGui
 from ui_gui import Ui_MainWindow
 
 import Parser

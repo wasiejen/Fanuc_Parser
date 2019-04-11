@@ -96,7 +96,7 @@ class Parser(object):
             # G1 ist CGODE for new Koordinate
             elif line.startswith("G1"):
                 # saves the actual number of the new coordinatepoint
-                coordinate_set = [number_of_layer, None, None, None]
+                coordinate_set = [number_of_layer, None, None, None, 0]
 
                 line = line.replace("\n", "")
                 elements = line.split(" ")
@@ -108,6 +108,8 @@ class Parser(object):
                         coordinate_set[2] = float(coordinate[1:])
                     elif coordinate.startswith("Z"):
                         coordinate_set[3] = float(coordinate[1:])
+                    elif coordinate.startswith("E"):
+                        coordinate_set[4] = 1
                     else:
                         # if no Z coordinate then uses static_z coordinate
                         coordinate_set[3] = float(static_z_coordinate)
@@ -139,7 +141,7 @@ class Parser(object):
             yaw = 0
             pitch = 0
             roll = 0
-            weld_en = 0
+            #weld_en = 0
 
             file_counter = 0
             point_counter = 0
@@ -148,7 +150,7 @@ class Parser(object):
 
             output_file, output = self.create_output_file(file_counter)
 
-            for layer_number, x, y, z in zip(ds[0], ds[1], ds[2], ds[3]):
+            for layer_number, x, y, z, weld_en in zip(ds[0], ds[1], ds[2], ds[3], ds[4]):
                 data_set = [layer_number, x, y, z, yaw, pitch, roll, weld_en]
                 data_set_strings = [str(element) for element in data_set]
                 line = ", ".join(data_set_strings)
@@ -247,9 +249,10 @@ class Parser(object):
 
         plt.show()
 
+
 if __name__ == '__main__':
     parser = Parser()
-    parser.loadFile("D:/DESKTOP/PYTHON/A02_GCODE_PARSER/src/hosenrohr_oVersatz.gcode")
+    parser.loadFile("D:/DESKTOP/PYTHON/A02_GCODE_PARSER/src/retrac_190320.gcode")
     # parser.loadFile("D:\\DESKTOP\\PYTHON\\A02_GCODE_PARSER\\src\\hosenrohr_oVersatz.gcode")
     parser.show_graph()
     parser.generate_txt_file_from_dataset()
