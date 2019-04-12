@@ -158,30 +158,37 @@ class Parser_Fanuc(object):
                     self.output.append(f"J PR[92] R[102]% CNT100")
                     self.output.append(f"L PR[91] 100mm/sec FINE RampTo R[100]")
                     # Kjellberg
-                    self.output.append(f"  WAIT   2.00(sec)")
-                    self.output.append(f"  CALL LASER_DRAHT_START")
+                    # self.output.append(f"  WAIT   2.00(sec)")
+                    # self.output.append(f"  CALL LASER_DRAHT_START")
                     
                     # gutroff
-                    #TODO:
-                    #self.output[-1] += "  Weld Start[1,5.0]"
+                    self.output[-1] += "  Weld Start[1,5.0]"    
+                    if nr == 1:
+                        self.output.append(f"  GO[2]=R[111]")           
+                    elif nr == 2:
+                        self.output.append(f"  GO[2]=R[112]")
+                    elif nr >= 3:
+                        self.output.append(f"  GO[2]=R[113]")
+
                 elif weld_state == 0:
                     #print("0")
                     # end of welding and start of retraction
                     # add weldstop to last drive command, add retractio and drive there
                     # Kjellberg
-                    self.output[-1] += "TB R[103]sec,CALL END_PUD"
-                    self.output.append(f"  WAIT    .50(sec)")
-                    self.output.append(f"  DO[117:Laser Start]=OFF")
-                    self.output.append(f"  WAIT R[104]")
-                    self.output.append(f"  R[4] = 1.2")
-                    self.output.append(f"  DO[123]=ON")
-                    self.output.append(f"  WAIT R[105]")
-                    self.output.append(f"  DO[123]=OFF")
-                    self.output.append(f"  WAIT   10.00(sec)")
+                    # self.output[-1] += "TB R[103]sec,CALL END_PUD"
+                    # self.output.append(f"  WAIT    .50(sec)")
+                    # self.output.append(f"  DO[117:Laser Start]=OFF")
+                    # self.output.append(f"  WAIT R[104]")
+                    # self.output.append(f"  R[4] = 1.2")
+                    # self.output.append(f"  DO[123]=ON")
+                    # self.output.append(f"  WAIT R[105]")
+                    # self.output.append(f"  DO[123]=OFF")
+                    # self.output.append(f"  WAIT   10.00(sec)")
 
                     # gutroff
                     #TODO:
-                    #self.output[-1] += "  Weld End[1,5.0,0.2s]"
+                    self.output[-1] += "  Weld End[1,5.0,0.2s]"
+                    self.output.append(f"  WAIT R[104]")
                     self.output.append(f"  PR[92] = PR[91]")
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
                     self.output.append(f"J PR[92] R[102]% CNT100")
@@ -195,15 +202,6 @@ class Parser_Fanuc(object):
             self.output.append(f"  !- Layer/Ebene {nr}")
             self.output.append(f"  PR[91] = PR[90]")
 
-            #TODO:
-            # gutroff
-            # if nr == 1:
-            #     self.output.append(f"  GO[2]=3")           
-            # elif nr == 2:
-            #     self.output.append(f"  GO[2]=4")
-            # elif nr == 3:
-            #     self.output.append(f"  GO[2]=5")
-
         if x != self.last_x:
             self.last_x = x
             self.output.append(f"  PR[91,1] = PR[90,1] + {x:4.3f}")
@@ -216,26 +214,24 @@ class Parser_Fanuc(object):
 
         if flag == "start":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
-            # Kjellberg
-            #self.output.append(f"  CALL LASER_DRAHT_START")
 
         elif flag == "welding":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
         elif flag == "stop":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
             # gutroff
-            # self.output[-1] += "  Weld End[1,5.0,0.2s]"
-            # Kjellberg
-            self.output[-1] += " TB R[103]sec,CALL END_PUD"
-            self.output.append(f"  DO[117:Laser Start]=OFF")
-            self.output.append(f"  !Sicherheitspunkt!")
+            self.output[-1] += "  Weld End[1,5.0,0.2s]"
+            # # Kjellberg
+            # self.output[-1] += " TB R[103]sec,CALL END_PUD"
+            # self.output.append(f"  DO[117:Laser Start]=OFF")
+            # self.output.append(f"  !Sicherheitspunkt!")
             # beide
             self.output.append(f"  PR[92] = PR[91]")
             self.output.append(f"  PR[92,3] = PR[92,3] + 100")
             self.output.append(f"J PR[92] R[102]% CNT100")
             # Kjellberg
             self.output.append(f"  WAIT   10.00(sec)")
-            self.output.append(f"  DO[119:Gas]=OFF")
+            # self.output.append(f"  DO[119:Gas]=OFF")
         else:
             print(f"something is wrong with dataset: {dataset}")
 
