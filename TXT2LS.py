@@ -1,6 +1,6 @@
 import os
 import datetime
-import sys
+# import sys
 
 
 class Parser_Fanuc(object):
@@ -118,10 +118,13 @@ class Parser_Fanuc(object):
                     f"  UFRAME_NUM = 1",
                     f"  UTOOL_NUM = {utool_number}",
                     f"  COL GUARD ADJUST 150",
-                    f"  MESSAGE[Teach Startpoint in PR90]",
-                    f"  MESSAGE[Weld speed R100 in mm/sec]",
-                    f"  MESSAGE[Retraction +Z in R101 in mm]",
-                    f"  MESSAGE[Retraction speed in R102 in %]",
+                    f"  !Teach Startpoint in PR90",
+                    f"  !Weld speed R100 in mm/sec",
+                    f"  !Retraction +Z in R101 in mm",
+                    f"  !Retraction speed in R102 in %",
+                    f"  !END_PUB Time in R103",
+                    f"  !Zeit bis Drahtvorschub R104",
+                    f"  !Drahtvorschubzeit R105",
                     f""]
         return template
 
@@ -153,8 +156,9 @@ class Parser_Fanuc(object):
                     self.output[-1] = f"  PR[92] = PR[91]"
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
                     self.output.append(f"J PR[92] R[102]% CNT100")
-                    self.output.append(f"L PR[91] 100mm/sec CNT10 RampTo R[100]")
+                    self.output.append(f"L PR[91] 100mm/sec FINE RampTo R[100]")
                     # Kjellberg
+                    self.output.append(f"  WAIT   2.00(sec)")
                     self.output.append(f"  CALL LASER_DRAHT_START")
                     
                     # gutroff
@@ -165,8 +169,16 @@ class Parser_Fanuc(object):
                     # end of welding and start of retraction
                     # add weldstop to last drive command, add retractio and drive there
                     # Kjellberg
-                    self.output[-1] += "TB   .50sec,CALL END_PUD"
-                    self.output.append(f"  DO[117]=OFF")
+                    self.output[-1] += "TB R[103]sec,CALL END_PUD"
+                    self.output.append(f"  WAIT    .50(sec)")
+                    self.output.append(f"  DO[117:Laser Start]=OFF")
+                    self.output.append(f"  WAIT R[104]")
+                    self.output.append(f"  R[4] = 1.2")
+                    self.output.append(f"  DO[123]=ON")
+                    self.output.append(f"  WAIT R[105]")
+                    self.output.append(f"  DO[123]=OFF")
+                    self.output.append(f"  WAIT   10.00(sec)")
+
                     # gutroff
                     #TODO:
                     #self.output[-1] += "  Weld End[1,5.0,0.2s]"
@@ -214,7 +226,7 @@ class Parser_Fanuc(object):
             # gutroff
             # self.output[-1] += "  Weld End[1,5.0,0.2s]"
             # Kjellberg
-            self.output[-1] += " TB   .50sec,CALL END_PUD"
+            self.output[-1] += " TB R[103]sec,CALL END_PUD"
             self.output.append(f"  DO[117:Laser Start]=OFF")
             self.output.append(f"  !Sicherheitspunkt!")
             # beide
@@ -222,7 +234,7 @@ class Parser_Fanuc(object):
             self.output.append(f"  PR[92,3] = PR[92,3] + 100")
             self.output.append(f"J PR[92] R[102]% CNT100")
             # Kjellberg
-            self.output.append(f"  WAIT   5.00(sec)")
+            self.output.append(f"  WAIT   10.00(sec)")
             self.output.append(f"  DO[119:Gas]=OFF")
         else:
             print(f"something is wrong with dataset: {dataset}")

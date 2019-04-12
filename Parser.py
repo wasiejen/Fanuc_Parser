@@ -145,7 +145,7 @@ class Parser(object):
 
             file_counter = 0
             point_counter = 0
-            #self.file_list = []
+            self.file_list = []
             old_layer_number = 0
 
             output_file, output = self.create_output_file(file_counter)
@@ -208,7 +208,7 @@ class Parser(object):
             else:
                 self.txt2ls = TXT2LS.Parser_Fanuc(path)
             self.txt2ls.start()
-        #self.file_list = []
+        # self.file_list = []
 
 
     def show_graph(self):
