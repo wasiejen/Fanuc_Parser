@@ -1,8 +1,24 @@
 
 class Kjellberg_Laser(object):
 
-    def __init__(self, state_list):
-        self.last_x, self.last_y, self.last_z, self.last_weld_state, self.last_nr = state_list
+    def __init__(self):
+        # self.last_x, self.last_y, self.last_z, self.last_weld_state, self.last_nr = state_list
+
+        self.last_x = None
+        self.last_y = None
+        self.last_z = None
+        # self.last_rx = None
+        # self.last_ry = None
+        # self.last_rz = None
+        # self.last_A = None
+        # self.last_B = None
+        # self.last_v = None
+        # self.last_cnt = None
+        # self.path_control_style = None
+        self.last_weld_state = None
+        self.last_nr = 0
+        self.output = None
+        self.tail = None
 
     def get_main_header(self):
         utool_number = 3
