@@ -16,6 +16,11 @@ class Parser(object):
         self.file_list = []
         self.gui = gui_instance
 
+        if self.gui:
+            self.txt2ls = TXT2LS.TXT2LS(self.gui.textBrowser_2)
+        else:
+            self.txt2ls = TXT2LS.TXT2LS()
+
     def loadFile(self, file_path=None):
         print(1, file_path)
         if "\\" in file_path:
@@ -133,7 +138,7 @@ class Parser(object):
         pass
 
     def generate_txt_file_from_dataset(self, target_points_per_file: int = 0):
-               
+
         if self.file_path_gcode is not None:
 
             ds = self.dataset
@@ -141,7 +146,7 @@ class Parser(object):
             yaw = 0
             pitch = 0
             roll = 0
-            #weld_en = 0
+            # weld_en = 0
 
             file_counter = 0
             point_counter = 0
@@ -195,21 +200,12 @@ class Parser(object):
         else:
             print(f"file: {self.file_name} successfully parsed to {output_file}")
 
-
-        
-                
-
     def generate_ls_file_from_dataset(self):
-        
-        for path in self.file_list:
 
-            if self.gui:
-                self.txt2ls = TXT2LS.Parser_Fanuc(path, self.gui.textBrowser_2)
-            else:
-                self.txt2ls = TXT2LS.Parser_Fanuc(path)
+        for path in self.file_list:
+            self.txt2ls.set_path(path)
             self.txt2ls.start()
         # self.file_list = []
-
 
     def show_graph(self):
         fig = plt.figure()
@@ -248,6 +244,9 @@ class Parser(object):
         plt.ylabel("y")
 
         plt.show()
+
+    def select_parser_target(self, target):
+        self.txt2ls.select_target(target)
 
 
 if __name__ == '__main__':

@@ -134,6 +134,21 @@ class Ui_MainWindow(object):
         self.button_parseAll.setMinimumSize(QtCore.QSize(81, 0))
         self.button_parseAll.setObjectName("button_parseAll")
         self.verticalLayout_5.addWidget(self.button_parseAll)
+
+        self.label_10 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.label_10.setObjectName("label_10")
+        self.verticalLayout_5.addWidget(self.label_10)
+
+        self.comboBox = QtWidgets.QComboBox(self)
+        self.comboBox.addItem("Gutroff")
+        self.comboBox.addItem("Kjellberg Laser")
+        self.comboBox.addItem("Kjellberg Pulver")
+        # self.comboBox.addItem("")
+        # self.comboBox.addItem("")
+        # self.comboBox.addItem("")
+        self.verticalLayout_5.addWidget(self.comboBox)
+        
+
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_5.addItem(spacerItem2)
         self.label_4 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
@@ -163,6 +178,7 @@ class Ui_MainWindow(object):
         self.button_parse1.setText(_translate("MainWindow", "parse GCODE -> TXT"))
         self.label_3.setText(_translate("MainWindow", "TXT -> LS"))
         self.label_7.setText(_translate("MainWindow", "  |  Punktebegrenzung: "))
+        self.label_10.setText(_translate("MainWindow", "set Target:"))
         self.lineEdit2.setText(_translate("MainWindow", "3000"))
         self.button_parse2.setText(_translate("MainWindow", "parse TXT -> LS"))
         self.label_5.setText(_translate("MainWindow", "extra functions"))
