@@ -220,7 +220,7 @@ class Parser_Fanuc(object):
             self.last_nr = nr
             self.output.append(f"  !-- Layer/Ebene {nr} --")
             self.output.append(f"  PR[91] = PR[90]")
-            #self.output.append(f"  PR[91,3] = PR[91,3] + R[99]")
+            self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
 
         if x != self.last_x:
             self.last_x = x
@@ -242,7 +242,7 @@ class Parser_Fanuc(object):
 
             if self.gutroff:
                 # gutroff
-                self.output[-1] += "  Weld End[1,5.0,0.2s]"
+                self.output[-1] += "  Weld End[1,3.0,0.3s]"
 
             if self.kjellberg:
                 # # Kjellberg
