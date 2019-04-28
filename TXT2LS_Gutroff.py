@@ -105,7 +105,7 @@ class Gutroff(object):
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
                     self.output.append(f"J PR[92] R[102]% CNT100")
 
-        self.last_weld_state = weld_state
+                self.last_weld_state = weld_state
 
         # if layer changes, then actualise from teached point
         # to enable corrections in process
@@ -136,7 +136,6 @@ class Gutroff(object):
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
         elif flag == "stop":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
-
             self.output[-1] += "  Weld End[1,3.0,0.3s]"
             self.output.append(f"  PR[92] = PR[91]")
             self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")

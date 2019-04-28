@@ -19,6 +19,7 @@ class GUI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.button_showGraph.clicked.connect(self.show_graph)
         self.button_parse1.clicked.connect(self.generate_txt_file)
         self.button_parse2.clicked.connect(self.generate_ls_file)
+        self.button_add_orientation.clicked.connect(self.generate_orientation)
         self.comboBox.activated[str].connect(self.select_parser_target)
 
         # create the parser instance for later usage
@@ -51,6 +52,9 @@ class GUI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def generate_ls_file(self):
         self.parser.generate_ls_file_from_dataset()
+
+    def generate_orientation(self):
+        self.parser.generate_orientation_from_xyz_coords()
 
     def select_parser_target(self, text):
         self.parser.select_parser_target(text)

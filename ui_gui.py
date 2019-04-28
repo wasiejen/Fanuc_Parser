@@ -135,6 +135,11 @@ class Ui_MainWindow(object):
         self.button_parseAll.setObjectName("button_parseAll")
         self.verticalLayout_5.addWidget(self.button_parseAll)
 
+        self.button_add_orientation = QtWidgets.QPushButton(self.verticalLayoutWidget_3)
+        self.button_add_orientation.setMinimumSize(QtCore.QSize(81, 0))
+        self.button_add_orientation.setObjectName("button_add_orientation")
+        self.verticalLayout_5.addWidget(self.button_add_orientation)
+
         self.label_10 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
         self.label_10.setObjectName("label_10")
         self.verticalLayout_5.addWidget(self.label_10)
@@ -184,5 +189,6 @@ class Ui_MainWindow(object):
         self.label_5.setText(_translate("MainWindow", "extra functions"))
         self.button_showGraph.setText(_translate("MainWindow", "show Graph"))
         self.button_parseAll.setText(_translate("MainWindow", "parse directory"))
+        self.button_add_orientation.setText(_translate("MainWindow", "add_orientation"))
         self.label_4.setText(_translate("MainWindow", "JW"))
 

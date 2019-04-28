@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import os
 # needed for 3d projection
 from mpl_toolkits.mplot3d import axes3d
+import numpy as np
 
 import TXT2LS
 
@@ -31,7 +32,7 @@ class Parser(object):
         self.dir_path = file_path[:index]
 
         self.dataset = []
-        [self.dataset.append([]) for i in range(6)]
+        [self.dataset.append([]) for i in range(8)]
 
         if file_path is not None:
 
@@ -61,8 +62,8 @@ class Parser(object):
                     self.gui.button_parse1.setDisabled(True)
                     self.gui.button_parse2.setDisabled(False)
                     self.gui.button_showGraph.setDisabled(True)
-                # TODO: txt file loader
-                # self.load_data_from_txt(file)
+            # TODO: txt file loader
+            # self.load_data_from_txt(file)
 
             print(f"loading data from file {self.file_name}")
 
@@ -101,7 +102,7 @@ class Parser(object):
             # G1 ist CGODE for new Koordinate
             elif line.startswith("G1"):
                 # saves the actual number of the new coordinatepoint
-                coordinate_set = [number_of_layer, None, None, None, 0]
+                coordinate_set = [number_of_layer, None, None, None, 0, 0, 0, 0]
 
                 line = line.replace("\n", "")
                 elements = line.split(" ")
@@ -114,7 +115,7 @@ class Parser(object):
                     elif coordinate.startswith("Z"):
                         coordinate_set[3] = float(coordinate[1:])
                     elif coordinate.startswith("E"):
-                        coordinate_set[4] = 1
+                        coordinate_set[7] = 1
                     else:
                         # if no Z coordinate then uses static_z coordinate
                         coordinate_set[3] = float(static_z_coordinate)
@@ -137,16 +138,108 @@ class Parser(object):
     def load_data_from_txt(self, file):
         pass
 
+    def generate_orientation_from_xyz_coords(self):
+        MIN_ABSTAND = 1  # in mm
+        # NUMBER_OF_CLOSEST_POINTS = 10
+        MAX_DISTANCE_CLOSEST_POINTS = 4  # in mm
+
+        # self.dataset  # x,y,z,e
+        layer_elements = []
+        old_layer_elements = []
+        old_z = None
+
+        ds = self.dataset
+        transposed_data = zip(*ds)
+
+        new_dataset = []
+
+        for dset in transposed_data:
+            dset = list(dset)
+            _, x, y, z, _, _, _, weld_en = dset
+            print(f"before: {dset}")
+            element = np.array((x, y, z))
+            layer_elements.append(element)
+            if z != old_z:
+                old_z = z
+                # new layer
+                old_layer_elements = layer_elements
+                # unterteilung der strecken
+                # richtig, das habe ich nämlich vergessen
+                prev_el = None
+                elements_to_check = []
+                for el in old_layer_elements:
+                    if prev_el is not None and weld_en == 1:
+                        # start ist old.el
+                        # bestimmen der distanz
+                        # gleichmaeßiges aufteilen auf die strecke
+                        strecken_vektor = el - prev_el
+                        strecken_distanz = np.linalg.norm(strecken_vektor)
+
+                        if strecken_distanz >= 2*MIN_ABSTAND:
+                            teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
+
+                            for i in range(1, teiler - 1):
+                                zwischen_punkt = prev_el + (strecken_vektor * i / teiler)
+                                elements_to_check.append(zwischen_punkt)
+
+                    prev_el = el
+                    elements_to_check.append(el)
+
+            # bestimmen der distance zu allen Punkten des alten Layers
+            distances = [np.linalg.norm(element - el) for el in elements_to_check]
+            distances = zip(distances, elements_to_check)
+            # print(f"distances: {distances}")
+
+            def check_first(data):
+                return data[0]
+
+            sorted_distances = sorted(distances, key=check_first) 
+            # print(f"sorted distances: {sorted_distances}")
+
+            # die nächsten punkte als bezug nehmen
+            # und die orientierung anhand derer bestimmen
+            # gewichtung für die n#chsten punkte erhöhen
+            orientations = []
+            counter = 0
+            for distance, el in sorted_distances:
+                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS:
+                    norm_orient = (element - el) / distance
+                    orientations.append(norm_orient)
+                    counter += 1
+
+            # einfaches bildes des durchschnittlichen orient vektors
+            if len(orientations) > 0:
+                
+                res_orient = sum(orientations)
+                print(f"RESULT-ORIENT: {res_orient}")
+
+                # TODO: nochmal genau aufzeichnen!!!
+                def angle_from_vertical(ankathete: float, gegenkathete: float):
+                    if gegenkathete == 0:
+                        gegenkathete = 0.001  # devide bx 0 is not allowed
+                    return np.arctan(ankathete / gegenkathete) / np.pi * 90
+
+                # umrechnen in gradabweichung von der senkrechten
+
+                x, y, z = res_orient
+                # um x - rx
+                dset[4] = angle_from_vertical(x, y)
+                # um y - ry
+                dset[5] = angle_from_vertical(x, z)
+                # um z - rz
+                # TODO: WIRD Z ueberhaupt benoetigt???
+                dset[6] = angle_from_vertical(y, z)
+
+            new_dataset.append(dset)
+            print(f"after: {dset}")
+        retransposed_data = zip(*new_dataset)
+        self.dataset = retransposed_data
+
     def generate_txt_file_from_dataset(self, target_points_per_file: int = 0):
 
         if self.file_path_gcode is not None:
 
             ds = self.dataset
-
-            yaw = 0
-            pitch = 0
-            roll = 0
-            # weld_en = 0
 
             file_counter = 0
             point_counter = 0
@@ -154,9 +247,9 @@ class Parser(object):
             old_layer_number = 0
 
             output_file, output = self.create_output_file(file_counter)
-
-            for layer_number, x, y, z, weld_en in zip(ds[0], ds[1], ds[2], ds[3], ds[4]):
-                data_set = [layer_number, x, y, z, yaw, pitch, roll, weld_en]
+            transposed_data = zip(*ds)
+            for data_set in transposed_data:
+                layer_number, *_ = data_set
                 data_set_strings = [str(element) for element in data_set]
                 line = ", ".join(data_set_strings)
                 point_counter += 1
