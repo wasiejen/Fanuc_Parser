@@ -40,7 +40,10 @@ class GUI(QtWidgets.QMainWindow, Ui_MainWindow):
         file_path, *_ = QtWidgets.QFileDialog.getOpenFileName()
         # print(file_path)
         self.lineEdit.setText(file_path)
-        self.parser.loadFile(file_path=file_path)
+        try:
+            self.parser.loadFile(file_path=file_path)
+        except ValueError as e:
+            print(e)
 
     def show_graph(self):
         self.parser.show_graph()

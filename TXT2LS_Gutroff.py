@@ -7,9 +7,9 @@ class Gutroff(object):
         self.last_x = None
         self.last_y = None
         self.last_z = None
-        # self.last_rx = None
-        # self.last_ry = None
-        # self.last_rz = None
+        self.last_rx = None
+        self.last_ry = None
+        self.last_rz = None
         # self.last_A = None
         # self.last_B = None
         # self.last_v = None
@@ -21,7 +21,7 @@ class Gutroff(object):
         self.tail = None
 
     def get_main_header(self):
-        utool_number = 3
+        utool_number = 6
         template = [f"  CALL HOME_ALL",
                     "",
                     f"  UFRAME_NUM = 1",
@@ -49,7 +49,7 @@ class Gutroff(object):
         nr, x, y, z, rx, ry, rz, weld_state = dataset.replace(
             " ", "").replace("\n", "").split(",")
         assert_border_xyz = 300
-        # assert_border_rxryrz = 45
+        assert_border_rxryrz = 50
         # assert_border_AB = 80 # fuers erste # TODO
         nr = int(nr)
         assert nr >= 0
@@ -59,6 +59,14 @@ class Gutroff(object):
         assert y <= assert_border_xyz and y >= -assert_border_xyz
         z = float(z)
         assert z <= assert_border_xyz and z >= 0
+        # rotations
+        rx = float(rx)
+        assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
+        ry = float(ry)
+        assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
+        rz = float(rz)
+        assert rz <= assert_border_rxryrz and rz >= -assert_border_rxryrz
+
         weld_state = int(weld_state)
         assert weld_state == 1 or weld_state == 0
 
@@ -116,7 +124,9 @@ class Gutroff(object):
             self.output.append(f"  PR[91,1] = PR[90,1] + {x:4.3f}")
             self.output.append(f"  PR[91,2] = PR[90,2] + {y:4.3f}")
             self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
-            self.last_x, self.last_y, self.last_z = x, y, z
+            self.output.append(f"  PR[91,4] = PR[90,4] + {rx:4.3f}")
+            self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
+            self.last_x, self.last_y, self.last_z, self.last_rx, self.last_ry = x, y, z, rx, ry
         else:
             if x != self.last_x:
                 self.last_x = x
@@ -127,6 +137,12 @@ class Gutroff(object):
             if z != self.last_z:
                 self.last_z = z
                 self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
+            if rx != self.last_rx:
+                self.last_rx = rx
+                self.output.append(f"  PR[91,4] = PR[90,4] + {rx:4.3f}")
+            if ry != self.last_ry:
+                self.last_ry = ry
+                self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
 
         if flag == "start":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")

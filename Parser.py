@@ -16,6 +16,7 @@ class Parser(object):
         self.dataset = []
         self.file_list = []
         self.gui = gui_instance
+        self.debug = False
 
         if self.gui:
             self.txt2ls = TXT2LS.TXT2LS(self.gui.textBrowser_2)
@@ -150,7 +151,7 @@ class Parser(object):
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
         # NUMBER_OF_CLOSEST_POINTS = 10
-        MAX_DISTANCE_CLOSEST_POINTS = 4  # in mm
+        MAX_DISTANCE_CLOSEST_POINTS = 5  # in mm
 
         # self.dataset  # x,y,z,e
         layer_elements = []
@@ -164,6 +165,11 @@ class Parser(object):
 
         new_dataset = []
 
+        if self.gui is not None:
+            self.gui.textBrowser_1.append(f"Beginne mit Ermittlung der Orientierungen")
+        else:
+            print(f"Beginne mit Ermittlung der Orientierungen")
+
         def draw_points_in_3d(elements_to_check):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -175,7 +181,7 @@ class Parser(object):
 
         for dset in transposed_data:
             dset = list(dset)
-            print(dset)
+            #  print(dset)
             _, x, y, z, _, _, _, weld_en = dset
             # print(f"before: {dset}")
             element = (np.array((x, y, z)), weld_en)
@@ -186,19 +192,19 @@ class Parser(object):
 
                 old_z = z
                 # new layer
-                print("# new layer #")
+                # print("# new layer #")
                 old_layer_elements = layer_elements
                 layer_elements = []
                 # unterteilung der strecken
                 # prev_el = None
                 elements_to_check = []
                 for el in old_layer_elements:
-                    print(f"prev_el: {prev_el}")
-                    print(f"el: {el}")
+                    # print(f"prev_el: {prev_el}")
+                    # print(f"el: {el}")
                     if el[1] == 1:
                         elements_to_check.append(el[0])
                         if prev_el is not None:
-                            print("bedingung erfuellt")
+                            # print("bedingung erfuellt")
 
                             # start ist old.el
                             # bestimmen der distanz
@@ -216,7 +222,8 @@ class Parser(object):
                     prev_el = el
                     # elements_to_check.append(el[0])
                 # Debug Point
-                draw_points_in_3d(elements_to_check)    
+                if self.debug:
+                    draw_points_in_3d(elements_to_check)    
                 
 
             element = element[0]  # weld info not needed anymore
@@ -237,7 +244,7 @@ class Parser(object):
             orientations = []
             counter = 0
             for distance, el in sorted_distances:
-                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS:
+                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 10:
                     norm_orient = (element - el) / distance
                     orientations.append(norm_orient)
                     counter += 1
@@ -246,29 +253,39 @@ class Parser(object):
             if len(orientations) > 0:
                 
                 res_orient = sum(orientations)
+                res_orient = res_orient / np.linalg.norm(res_orient)
                 # print(f"RESULT-ORIENT: {res_orient}")
 
                 # TODO: nochmal genau aufzeichnen!!!
-                def angle_from_vertical(ankathete: float, gegenkathete: float):
-                    if gegenkathete == 0:
-                        gegenkathete = 0.001  # devide bx 0 is not allowed
-                    return np.arctan(ankathete / gegenkathete) / np.pi * 90
+                def angle_from_vertical(gegenkathete: float, ankathete: float):
+                    if ankathete == 0:
+                        ankathete = 0.001  # devide bx 0 is not allowed
+                    return np.arctan(gegenkathete / ankathete) / np.pi * 180
 
                 # umrechnen in gradabweichung von der senkrechten
 
                 x, y, z = res_orient
                 # um x - rx
-                dset[4] = angle_from_vertical(x, y)
+                dset[4] = angle_from_vertical(y, z)
                 # um y - ry
                 dset[5] = angle_from_vertical(x, z)
-                # um z - rz
-                # TODO: WIRD Z ueberhaupt benoetigt???
-                dset[6] = angle_from_vertical(y, z)
+                # # um z - rz
+                # # TODO: WIRD Z ueberhaupt benoetigt???
+                # dset[6] = angle_from_vertical(y, x)
+
+                # dset[4] = x
+                # dset[5] = y
+                dset[6] = z
 
             new_dataset.append(dset)
             # print(f"after: {dset}")
         retransposed_data = zip(*new_dataset)
         self.dataset = retransposed_data
+
+        if self.gui is not None:
+            self.gui.textBrowser_1.append(f"Orientierungen berechnet")
+        else:
+            print(f"Orientierungen berechnet")
 
     def generate_txt_file_from_dataset(self, target_points_per_file: int = 0):
 
@@ -376,36 +393,18 @@ class Parser(object):
         plt.plot(x, y, z, "bo")
 
         # dataset = [np.array(el) for el in self.dataset]
+        # np.arctan(gegenkathete / ankathete) / np.pi * 90
         # nr, x, y, z, rx, ry, rz = dataset
-        xrx = np.array(x)+(np.array(rx)/90*np.pi) * 5
-        yry = np.array(y)+(np.array(ry)/90*np.pi) * 5
-        zrz = np.array(z)+(np.array(rz)/90*np.pi) * 5
+        xrx = np.array(x)+np.tan(np.array(ry)/180*np.pi) * rz
+        yry = np.array(y)+np.tan(np.array(rx)/180*np.pi) * rz
+        zrz = np.array(z)+np.array(rz)#/90*np.pi
 
-        # orient_x = zip(x, xrx)
-        # orient_y = zip(y, yry)
-        # orient_z = zip(z, zrz)
-        # # orient_res = zip(orient_x, orient_y, orient_z)
-        # # for
-        # plt.plot(orient_x, orient_y, orient_z, "g-")
-        plt.plot(xrx, yry, zrz, "g-")
-
-        # dataset = zip(*self.dataset)
-        # for nr, x, y, z, rx, ry, rz, *_ in dataset:
-        #     plt.plot(x, y, z, "bo")
-            # ax.plot([x, x+rx/90*3.14],
-            #         [y, y+ry/90*3.14],
-            #         [z, z+rz/90*3.14], 'g-')
-            # ax.set_xlabel("X")
-            # ax.set_ylabel("Y")
-
-        # plt.plot(range(len(x)), x)
-        # plt.xlabel("point number")
-        # plt.ylabel("x")
-
-        # fig3.add_subplot(222)
-        # plt.plot(range(len(y)), y)
-        # plt.xlabel("point number")
-        # plt.ylabel("y")
+        orient_x = zip(x, xrx)
+        orient_y = zip(y, yry)
+        orient_z = zip(z, zrz)
+        orient_res = zip(orient_x, orient_y, orient_z)
+        for x, y, z in orient_res:
+            plt.plot(x, y, z, "r-")
 
         plt.show()
 
