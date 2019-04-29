@@ -64,8 +64,8 @@ class Parser(object):
                     self.gui.button_showGraph.setDisabled(True)
             # TODO: txt file loader
             # self.load_data_from_txt(file)
-
-            print(f"loading data from file {self.file_name}")
+            file.close()
+            print(f"loaded data from file {self.file_name}")
 
     def load_data_from_gcode(self, file):
         number_of_coordinates = 0
@@ -133,10 +133,19 @@ class Parser(object):
                         self.dataset[index].append(element)
                     number_of_coordinates += 1
 
-        file.close()
+        
 
     def load_data_from_txt(self, file):
-        pass
+        dataset = []
+        for line in file:
+            if line == "" or line.startswith("#"):
+                continue
+            else:
+                line = line.replace("\n", "")
+                elements = line.split(", ")
+                elements = [float(e) for e in elements]
+                dataset.append(elements)
+        self.dataset = zip(*dataset)
 
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
@@ -146,45 +155,71 @@ class Parser(object):
         # self.dataset  # x,y,z,e
         layer_elements = []
         old_layer_elements = []
+        elements_to_check = []
         old_z = None
+        el = None
+        prev_el = None
 
-        ds = self.dataset
-        transposed_data = zip(*ds)
+        transposed_data = zip(*self.dataset)
 
         new_dataset = []
 
+        def draw_points_in_3d(elements_to_check):
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            for x, y, z in elements_to_check:
+                ax.plot([x], [y], [z], "bo")
+            plt.show()
+
         for dset in transposed_data:
             dset = list(dset)
+            print(dset)
             _, x, y, z, _, _, _, weld_en = dset
-            print(f"before: {dset}")
-            element = np.array((x, y, z))
+            # print(f"before: {dset}")
+            element = (np.array((x, y, z)), weld_en)
+            if old_z is None:
+                old_z = z
             layer_elements.append(element)
             if z != old_z:
+
                 old_z = z
                 # new layer
+                print("# new layer #")
                 old_layer_elements = layer_elements
+                layer_elements = []
                 # unterteilung der strecken
-                # richtig, das habe ich nämlich vergessen
-                prev_el = None
+                # prev_el = None
                 elements_to_check = []
                 for el in old_layer_elements:
-                    if prev_el is not None and weld_en == 1:
-                        # start ist old.el
-                        # bestimmen der distanz
-                        # gleichmaeßiges aufteilen auf die strecke
-                        strecken_vektor = el - prev_el
-                        strecken_distanz = np.linalg.norm(strecken_vektor)
+                    print(f"prev_el: {prev_el}")
+                    print(f"el: {el}")
+                    if el[1] == 1:
+                        elements_to_check.append(el[0])
+                        if prev_el is not None:
+                            print("bedingung erfuellt")
 
-                        if strecken_distanz >= 2*MIN_ABSTAND:
-                            teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
+                            # start ist old.el
+                            # bestimmen der distanz
+                            # gleichmaeßiges aufteilen auf die strecke
+                            strecken_vektor = el[0] - prev_el[0]
+                            strecken_distanz = np.linalg.norm(strecken_vektor)
 
-                            for i in range(1, teiler - 1):
-                                zwischen_punkt = prev_el + (strecken_vektor * i / teiler)
-                                elements_to_check.append(zwischen_punkt)
+                            if strecken_distanz >= 2*MIN_ABSTAND:
+                                teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
+
+                                for i in range(1, teiler):
+                                    zwischen_punkt = prev_el[0] + (strecken_vektor * i / teiler)
+                                    elements_to_check.append(zwischen_punkt)
 
                     prev_el = el
-                    elements_to_check.append(el)
+                    # elements_to_check.append(el[0])
+                # Debug Point
+                draw_points_in_3d(elements_to_check)    
+                
 
+            element = element[0]  # weld info not needed anymore
             # bestimmen der distance zu allen Punkten des alten Layers
             distances = [np.linalg.norm(element - el) for el in elements_to_check]
             distances = zip(distances, elements_to_check)
@@ -211,7 +246,7 @@ class Parser(object):
             if len(orientations) > 0:
                 
                 res_orient = sum(orientations)
-                print(f"RESULT-ORIENT: {res_orient}")
+                # print(f"RESULT-ORIENT: {res_orient}")
 
                 # TODO: nochmal genau aufzeichnen!!!
                 def angle_from_vertical(ankathete: float, gegenkathete: float):
@@ -231,7 +266,7 @@ class Parser(object):
                 dset[6] = angle_from_vertical(y, z)
 
             new_dataset.append(dset)
-            print(f"after: {dset}")
+            # print(f"after: {dset}")
         retransposed_data = zip(*new_dataset)
         self.dataset = retransposed_data
 
@@ -309,7 +344,7 @@ class Parser(object):
         # load some test data for demonstration and plot a wireframe
         # X, Y, Z = axes3d.get_test_data(0.1)
         # nr, x, y, z, rx, ry, rz, A, B, v, cnt, weld_state, job_nr, *_ = self.dataset
-        nr, x, y, z, *_ = self.dataset
+        nr, x, y, z, rx, ry, rz, *_ = self.dataset
         ax.plot(x, y, z)
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
@@ -335,6 +370,42 @@ class Parser(object):
         plt.plot(x, y)
         plt.xlabel("x")
         plt.ylabel("y")
+
+        fig3 = plt.figure()
+        ax = fig3.add_subplot(111, projection='3d')
+        plt.plot(x, y, z, "bo")
+
+        # dataset = [np.array(el) for el in self.dataset]
+        # nr, x, y, z, rx, ry, rz = dataset
+        xrx = np.array(x)+(np.array(rx)/90*np.pi) * 5
+        yry = np.array(y)+(np.array(ry)/90*np.pi) * 5
+        zrz = np.array(z)+(np.array(rz)/90*np.pi) * 5
+
+        # orient_x = zip(x, xrx)
+        # orient_y = zip(y, yry)
+        # orient_z = zip(z, zrz)
+        # # orient_res = zip(orient_x, orient_y, orient_z)
+        # # for
+        # plt.plot(orient_x, orient_y, orient_z, "g-")
+        plt.plot(xrx, yry, zrz, "g-")
+
+        # dataset = zip(*self.dataset)
+        # for nr, x, y, z, rx, ry, rz, *_ in dataset:
+        #     plt.plot(x, y, z, "bo")
+            # ax.plot([x, x+rx/90*3.14],
+            #         [y, y+ry/90*3.14],
+            #         [z, z+rz/90*3.14], 'g-')
+            # ax.set_xlabel("X")
+            # ax.set_ylabel("Y")
+
+        # plt.plot(range(len(x)), x)
+        # plt.xlabel("point number")
+        # plt.ylabel("x")
+
+        # fig3.add_subplot(222)
+        # plt.plot(range(len(y)), y)
+        # plt.xlabel("point number")
+        # plt.ylabel("y")
 
         plt.show()
 
