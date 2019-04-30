@@ -28,14 +28,17 @@ class Gutroff(object):
                     f"  UTOOL_NUM = {utool_number}",
                     f"  COL GUARD ADJUST 150",
                     f"  !Teach Startpoint in PR90",
+                    f"  !Dont use PR91 and PR92 for anything else!",
                     f"  !----",
                     # f"  !Hoehenzusatz R99 in mm",
                     f"  !Weld speed R100 in mm/sec",
                     f"  !Retraction +Z in R101 in mm",
-                    f"  !Retraction speed in R102 in %",
-                    f"  !",
+                    f"  !Retraction speed in R102 in mm/sec",
+                    f"  !----",
                     f"  !Wartezeit nach Schweissstop R104 in s",
-                    f"  !",
+                    f"  !Job am Start der Naht R107",
+                    f"  !Job am Ende der Naht R108",
+                    f"  !Job am Ende Haltezeit R109 in sec",
                     f"  !----",
                     f"  !Jobs per Layer/Ebene in ",
                     f"  !R111-118 für Ebene 1-8 anzugeben",
@@ -80,11 +83,11 @@ class Gutroff(object):
                     # drive there, and reinsert drivecommand
                     self.output[-1] = f"  PR[92] = PR[91]"
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
-                    self.output.append(f"J PR[92] R[102]% CNT100")
+                    self.output.append(f"L PR[92] R[102]mm/sec CNT100")
                     self.output.append(
                         f"L PR[91] 100mm/sec FINE RampTo R[100]")
 
-                    self.output[-1] += "  Weld Start[1,5.0]"
+                    self.output[-1] += "  Weld Start[1,R[107]]"
                     if nr == 1:
                         self.output.append(f"  GO[2]=R[111]")
                     elif nr == 2:
@@ -107,11 +110,11 @@ class Gutroff(object):
                     # end of welding and start of retraction
                     # add weldstop to last drive command, add retractio and drive there
 
-                    self.output[-1] += "  Weld End[1,5.0,0.2s]"
+                    self.output[-1] += "  Weld End[1,R[108],R[109]s]"
                     self.output.append(f"  WAIT R[104]")
                     self.output.append(f"  PR[92] = PR[91]")
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
-                    self.output.append(f"J PR[92] R[102]% CNT100")
+                    self.output.append(f"L PR[92] R[102]mm/sec CNT100")
 
         self.last_weld_state = weld_state
 
@@ -124,7 +127,7 @@ class Gutroff(object):
             self.output.append(f"  PR[91,1] = PR[90,1] + {x:4.3f}")
             self.output.append(f"  PR[91,2] = PR[90,2] + {y:4.3f}")
             self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
-            self.output.append(f"  PR[91,4] = PR[90,4] + {rx:4.3f}")
+            self.output.append(f"  PR[91,4] = PR[90,4] - {rx:4.3f}")
             self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
             self.last_x, self.last_y, self.last_z, self.last_rx, self.last_ry = x, y, z, rx, ry
         else:
@@ -151,10 +154,10 @@ class Gutroff(object):
         elif flag == "stop":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
 
-            self.output[-1] += "  Weld End[1,3.0,0.3s]"
+            self.output[-1] += "  Weld End[1,R[108],R[109]s]"
             self.output.append(f"  PR[92] = PR[91]")
             self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
-            self.output.append(f"J PR[92] R[102]% CNT100")
+            self.output.append(f"L PR[92] R[102]mm/sec CNT100")
             self.output.append(f"  WAIT   10.00(sec)")
         else:
             print(f"something is wrong with dataset: {dataset}")

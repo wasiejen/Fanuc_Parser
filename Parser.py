@@ -171,8 +171,8 @@ class Parser(object):
             print(f"Beginne mit Ermittlung der Orientierungen")
 
         def draw_points_in_3d(elements_to_check):
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            fig4 = plt.figure()
+            ax = fig4.add_subplot(111, projection='3d')
             ax.set_xlabel("X")
             ax.set_ylabel("Y")
             for x, y, z in elements_to_check:
@@ -195,19 +195,17 @@ class Parser(object):
                 # print("# new layer #")
                 old_layer_elements = layer_elements
                 layer_elements = []
+
                 # unterteilung der strecken
-                # prev_el = None
                 elements_to_check = []
                 for el in old_layer_elements:
                     # print(f"prev_el: {prev_el}")
                     # print(f"el: {el}")
+                    # if weld_en == 1
                     if el[1] == 1:
                         elements_to_check.append(el[0])
                         if prev_el is not None:
-                            # print("bedingung erfuellt")
 
-                            # start ist old.el
-                            # bestimmen der distanz
                             # gleichmaeßiges aufteilen auf die strecke
                             strecken_vektor = el[0] - prev_el[0]
                             strecken_distanz = np.linalg.norm(strecken_vektor)
@@ -215,7 +213,9 @@ class Parser(object):
                             if strecken_distanz >= 2*MIN_ABSTAND:
                                 teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
 
-                                for i in range(1, teiler):
+                                # start at index 0, so starting point is added (in sum 3)
+                                # end at index teiler +1, so extra exit point added here (in sum 3)
+                                for i in range(0, teiler +1):
                                     zwischen_punkt = prev_el[0] + (strecken_vektor * i / teiler)
                                     elements_to_check.append(zwischen_punkt)
 
@@ -244,7 +244,7 @@ class Parser(object):
             orientations = []
             counter = 0
             for distance, el in sorted_distances:
-                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 10:
+                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 5:
                     norm_orient = (element - el) / distance
                     orientations.append(norm_orient)
                     counter += 1
@@ -390,6 +390,8 @@ class Parser(object):
 
         fig3 = plt.figure()
         ax = fig3.add_subplot(111, projection='3d')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
         plt.plot(x, y, z, "bo")
 
         # dataset = [np.array(el) for el in self.dataset]
