@@ -271,6 +271,8 @@ class Parser(object):
                 dset[5] = angle_from_vertical(x, z)
                 # # um z - rz
                 # # TODO: WIRD Z ueberhaupt benoetigt???
+                #hyp = np.sqrt(y*y+x*x)
+                #dset[6] = np.arcsin(y/hyp) / np.pi * 180
                 # dset[6] = angle_from_vertical(y, x)
 
                 # dset[4] = x

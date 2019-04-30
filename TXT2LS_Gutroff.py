@@ -68,7 +68,7 @@ class Gutroff(object):
         ry = float(ry)
         assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
         rz = float(rz)
-        assert rz <= assert_border_rxryrz and rz >= -assert_border_rxryrz
+        assert rz <= 180 and rz >= -180
 
         weld_state = int(weld_state)
         assert weld_state == 1 or weld_state == 0
@@ -127,9 +127,11 @@ class Gutroff(object):
             self.output.append(f"  PR[91,1] = PR[90,1] + {x:4.3f}")
             self.output.append(f"  PR[91,2] = PR[90,2] + {y:4.3f}")
             self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
-            self.output.append(f"  PR[91,4] = PR[90,4] - {rx:4.3f}")
-            self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
-            self.last_x, self.last_y, self.last_z, self.last_rx, self.last_ry = x, y, z, rx, ry
+            # self.output.append(f"  PR[91,4] = PR[90,4] - {rx:4.3f}")
+            # self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
+            # self.output.append(f"  PR[91,6] = PR[90,6] + {rz:4.3f}")
+            self.last_x, self.last_y, self.last_z = x, y, z
+            self.last_rx, self.last_ry, self.last_rz = rx, ry, rx
         else:
             if x != self.last_x:
                 self.last_x = x
@@ -146,6 +148,9 @@ class Gutroff(object):
             if ry != self.last_ry:
                 self.last_ry = ry
                 self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
+            # if rz != self.last_rz:
+            #     self.last_rz = rz
+            #     self.output.append(f"  PR[91,6] = PR[90,6] + {rz:4.3f}")
 
         if flag == "start":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
