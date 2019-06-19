@@ -33,7 +33,6 @@ class Parser(object):
         self.dir_path = file_path[:index]
 
         self.dataset = []
-        [self.dataset.append([]) for i in range(8)]
 
         if file_path is not None:
 
@@ -130,23 +129,20 @@ class Parser(object):
 
                 # save coordinate in dataset and increase coordinate number
                 if coordinate_complete:
-                    for index, element in enumerate(coordinate_set):
-                        self.dataset[index].append(element)
-                    number_of_coordinates += 1
+                    self.dataset.append(coordinate_set)
+                    number_of_coordinates += 1    
 
-        
-
-    def load_data_from_txt(self, file):
-        dataset = []
-        for line in file:
-            if line == "" or line.startswith("#"):
-                continue
-            else:
-                line = line.replace("\n", "")
-                elements = line.split(", ")
-                elements = [float(e) for e in elements]
-                dataset.append(elements)
-        self.dataset = zip(*dataset)
+    # def load_data_from_txt(self, file):
+    #     dataset = []
+    #     for line in file:
+    #         if line == "" or line.startswith("#"):
+    #             continue
+    #         else:
+    #             line = line.replace("\n", "")
+    #             elements = line.split(", ")
+    #             elements = [float(e) for e in elements]
+    #             dataset.append(elements)
+    #     self.dataset = zip(*dataset)
 
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
@@ -160,8 +156,6 @@ class Parser(object):
         old_z = None
         el = None
         prev_el = None
-
-        transposed_data = zip(*self.dataset)
 
         new_dataset = []
 
@@ -179,7 +173,7 @@ class Parser(object):
                 ax.plot([x], [y], [z], "bo")
             plt.show()
 
-        for dset in transposed_data:
+        for dset in self.dataset:
             dset = list(dset)
             #  print(dset)
             _, x, y, z, _, _, _, weld_en = dset
@@ -281,8 +275,6 @@ class Parser(object):
 
             new_dataset.append(dset)
             # print(f"after: {dset}")
-        retransposed_data = zip(*new_dataset)
-        self.dataset = retransposed_data
 
         if self.gui is not None:
             self.gui.textBrowser_1.append(f"Orientierungen berechnet")
@@ -293,17 +285,14 @@ class Parser(object):
 
         if self.file_path_gcode is not None:
 
-            ds = self.dataset
-
             file_counter = 0
             point_counter = 0
             self.file_list = []
             old_layer_number = 0
 
             output_file, output = self.create_output_file(file_counter)
-            transposed_data = zip(*ds)
-            for data_set in transposed_data:
-                layer_number, *_ = data_set
+            for data_set in self.dataset:
+                layer_number = data_set[0]
                 data_set_strings = [str(element) for element in data_set]
                 line = ", ".join(data_set_strings)
                 point_counter += 1
@@ -363,7 +352,7 @@ class Parser(object):
         # load some test data for demonstration and plot a wireframe
         # X, Y, Z = axes3d.get_test_data(0.1)
         # nr, x, y, z, rx, ry, rz, A, B, v, cnt, weld_state, job_nr, *_ = self.dataset
-        nr, x, y, z, rx, ry, rz, *_ = self.dataset
+        nr, x, y, z, rx, ry, rz, *_ = zip(*self.dataset)
         ax.plot(x, y, z)
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
