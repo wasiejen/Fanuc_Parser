@@ -175,7 +175,7 @@ class Parser(object):
 
         for dset in self.dataset:
             dset = list(dset)
-            #  print(dset)
+            # print(dset)
             _, x, y, z, _, _, _, weld_en = dset
             # print(f"before: {dset}")
             element = (np.array((x, y, z)), weld_en)
@@ -275,6 +275,8 @@ class Parser(object):
 
             new_dataset.append(dset)
             # print(f"after: {dset}")
+
+        self.dataset = new_dataset
 
         if self.gui is not None:
             self.gui.textBrowser_1.append(f"Orientierungen berechnet")
