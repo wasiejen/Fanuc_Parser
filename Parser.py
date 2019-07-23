@@ -61,9 +61,10 @@ class Parser(object):
                     self.gui.textBrowser_2.append(f"loading data from file {self.file_name}")
                     self.gui.button_parse1.setDisabled(True)
                     self.gui.button_parse2.setDisabled(False)
-                    self.gui.button_showGraph.setDisabled(True)
+                    self.gui.button_showGraph.setDisabled(False)
             # TODO: txt file loader
-            # self.load_data_from_txt(file)
+            self.file_list = [file_path]
+            self.load_data_from_txt(file)
             file.close()
             print(f"loaded data from file {self.file_name}")
 
@@ -132,17 +133,25 @@ class Parser(object):
                     self.dataset.append(coordinate_set)
                     number_of_coordinates += 1    
 
-    # def load_data_from_txt(self, file):
-    #     dataset = []
-    #     for line in file:
-    #         if line == "" or line.startswith("#"):
-    #             continue
-    #         else:
-    #             line = line.replace("\n", "")
-    #             elements = line.split(", ")
-    #             elements = [float(e) for e in elements]
-    #             dataset.append(elements)
-    #     self.dataset = zip(*dataset)
+    def load_data_from_txt(self, file):
+        dataset = []
+
+        # ######
+        # file_name, file_type = self.file_name.split(".")
+        # file_name += ".txt"
+        # file_path_txt = os.path.join(self.dir_path, file_name)
+        # self.file_list = [file_path_txt]
+
+
+        for line in file:
+            if line == "" or line.startswith("#"):
+                continue
+            else:
+                line = line.replace("\n", "")
+                elements = line.split(", ")
+                elements = [float(e) for e in elements]
+                dataset.append(elements)
+        self.dataset = dataset
 
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
@@ -381,25 +390,25 @@ class Parser(object):
         plt.xlabel("x")
         plt.ylabel("y")
 
-        fig3 = plt.figure()
-        ax = fig3.add_subplot(111, projection='3d')
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        plt.plot(x, y, z, "bo")
-
-        # dataset = [np.array(el) for el in self.dataset]
-        # np.arctan(gegenkathete / ankathete) / np.pi * 90
-        # nr, x, y, z, rx, ry, rz = dataset
-        xrx = np.array(x)+np.tan(np.array(ry)/180*np.pi) * rz
-        yry = np.array(y)+np.tan(np.array(rx)/180*np.pi) * rz
-        zrz = np.array(z)+np.array(rz)#/90*np.pi
-
-        orient_x = zip(x, xrx)
-        orient_y = zip(y, yry)
-        orient_z = zip(z, zrz)
-        orient_res = zip(orient_x, orient_y, orient_z)
-        for x, y, z in orient_res:
-            plt.plot(x, y, z, "r-")
+        # fig3 = plt.figure()
+        # ax = fig3.add_subplot(111, projection='3d')
+        # ax.set_xlabel("X")
+        # ax.set_ylabel("Y")
+        # plt.plot(x, y, z, "bo")
+        #
+        # # dataset = [np.array(el) for el in self.dataset]
+        # # np.arctan(gegenkathete / ankathete) / np.pi * 90
+        # # nr, x, y, z, rx, ry, rz = dataset
+        # xrx = np.array(x)+np.tan(np.array(ry)/180*np.pi) * rz
+        # yry = np.array(y)+np.tan(np.array(rx)/180*np.pi) * rz
+        # zrz = np.array(z)+np.array(rz)#/90*np.pi
+        #
+        # orient_x = zip(x, xrx)
+        # orient_y = zip(y, yry)
+        # orient_z = zip(z, zrz)
+        # orient_res = zip(orient_x, orient_y, orient_z)
+        # for x, y, z in orient_res:
+        #     plt.plot(x, y, z, "r-")
 
         plt.show()
 
