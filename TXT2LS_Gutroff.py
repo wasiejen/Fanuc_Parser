@@ -49,30 +49,64 @@ class Gutroff(object):
     def parse_line(self, dataset, flag, output):
         self.output = output
         # print(dataset)
-        nr, x, y, z, rx, ry, rz, weld_state = dataset.replace(
+        cleaned_dataset = dataset.replace(
             " ", "").replace("\n", "").split(",")
-        assert_border_xyz = 500
-        assert_border_rxryrz = 60
+        nr, x, y, z, rx, ry, rz, weld_state = [float(i) for i in cleaned_dataset]
+        assert_border_xyz = 500.
+        assert_border_rxryrz = 40.
+        min_rotation = 5. # degree
         # assert_border_AB = 80 # fuers erste # TODO
 
+        def is_orientation_close(angle_a, angle_b):
+            border = 5. # degrees
+            return border >= abs(angle_a - angle_b)
+
+        # try:
+        #     nr = int(nr)
+        #     assert nr >= 0
+        #     x = float(x)
+        #     assert x <= assert_border_xyz and x >= -assert_border_xyz
+        #     y = float(y)
+        #     assert y <= assert_border_xyz and y >= -assert_border_xyz
+        #     z = float(z)
+        #     assert z <= assert_border_xyz and z >= 0
+        #     # rotations
+        #     rx = float(rx)
+        #     assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
+        #     ry = float(ry)
+        #     assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
+        #     # rz = float(rz)
+        #     # assert rz <= 180 and rz >= -180
+        # except AssertionError as e:
+        #     print(e)
+        #     print(nr, x, y, z, rx, ry, rz, weld_state)
+
+
+
         try:
-            nr = int(nr)
             assert nr >= 0
-            x = float(x)
             assert x <= assert_border_xyz and x >= -assert_border_xyz
-            y = float(y)
             assert y <= assert_border_xyz and y >= -assert_border_xyz
-            z = float(z)
             assert z <= assert_border_xyz and z >= 0
             # rotations
-            rx = float(rx)
             assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
-            ry = float(ry)
+            if abs(rx) <= min_rotation:
+                rx = 0.
+            if rx >= assert_border_rxryrz:
+                rx = assert_border_rxryrz
+            if rx <= -assert_border_rxryrz:
+                rx = -assert_border_rxryrz
             assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
-            # rz = float(rz)
+            if abs(ry) <= min_rotation:
+                ry = 0.
+            if ry >= assert_border_rxryrz:
+                ry = assert_border_rxryrz
+            if ry <= -assert_border_rxryrz:
+                ry = -assert_border_rxryrz
             # assert rz <= 180 and rz >= -180
         except AssertionError as e:
-            print(nr, x, y, z, rx, ry, rz, weld_state)
+            print(e)
+            print(dataset)
 
         weld_state = int(weld_state)
         assert weld_state == 1 or weld_state == 0
@@ -83,8 +117,8 @@ class Gutroff(object):
                 # print("not equal")
                 if weld_state == 1:
                     # end of retraction and start welding
-                    # remove last drive command, antroduce safety point,
-                    # drive there, and reinsert drivecommand
+                    # remove last drive command, introduce safety point,
+                    # drive there, and reinsert drive command
                     self.output[-1] = f"  PR[92] = PR[91]"
                     self.output.append(f"  PR[92,3] = PR[92,3] + R[101]")
                     self.output.append(f"J PR[92] R[102]% CNT100")
@@ -112,7 +146,7 @@ class Gutroff(object):
                 elif weld_state == 0:
                     # print("0")
                     # end of welding and start of retraction
-                    # add weldstop to last drive command, add retractio and drive there
+                    # add weldstop to last drive command, add retraction and drive there
 
                     self.output[-1] += "  Weld End[1,3.0,0.3s]"
                     self.output.append(f"  WAIT R[104]")
@@ -146,15 +180,26 @@ class Gutroff(object):
             if z != self.last_z:
                 self.last_z = z
                 self.output.append(f"  PR[91,3] = PR[90,3] + {z:4.3f}")
-            if rx != self.last_rx:
+            if not is_orientation_close(rx, self.last_rx):
                 self.last_rx = rx
                 self.output.append(f"  PR[91,4] = PR[90,4] - {rx:4.3f}")
-            if ry != self.last_ry:
+            if not is_orientation_close(ry, self.last_ry):
                 self.last_ry = ry
                 self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
+
+            # if rx != self.last_rx:
+            #     self.last_rx = rx
+            #     self.output.append(f"  PR[91,4] = PR[90,4] - {rx:4.3f}")
+            # if ry != self.last_ry:
+            #     self.last_ry = ry
+            #     self.output.append(f"  PR[91,5] = PR[90,5] + {ry:4.3f}")
             # if rz != self.last_rz:
             #     self.last_rz = rz
             #     self.output.append(f"  PR[91,6] = PR[90,6] + {rz:4.3f}")
+
+
+
+
 
         if flag == "start":
             self.output.append(f"L PR[91] R[100]mm/sec CNT100")
