@@ -51,24 +51,28 @@ class Gutroff(object):
         # print(dataset)
         nr, x, y, z, rx, ry, rz, weld_state = dataset.replace(
             " ", "").replace("\n", "").split(",")
-        assert_border_xyz = 300
-        assert_border_rxryrz = 50
+        assert_border_xyz = 500
+        assert_border_rxryrz = 60
         # assert_border_AB = 80 # fuers erste # TODO
-        nr = int(nr)
-        assert nr >= 0
-        x = float(x)
-        assert x <= assert_border_xyz and x >= -assert_border_xyz
-        y = float(y)
-        assert y <= assert_border_xyz and y >= -assert_border_xyz
-        z = float(z)
-        assert z <= assert_border_xyz and z >= 0
-        # rotations
-        rx = float(rx)
-        assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
-        ry = float(ry)
-        assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
-        rz = float(rz)
-        assert rz <= 180 and rz >= -180
+
+        try:
+            nr = int(nr)
+            assert nr >= 0
+            x = float(x)
+            assert x <= assert_border_xyz and x >= -assert_border_xyz
+            y = float(y)
+            assert y <= assert_border_xyz and y >= -assert_border_xyz
+            z = float(z)
+            assert z <= assert_border_xyz and z >= 0
+            # rotations
+            rx = float(rx)
+            assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
+            ry = float(ry)
+            assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
+            # rz = float(rz)
+            # assert rz <= 180 and rz >= -180
+        except AssertionError as e:
+            print(nr, x, y, z, rx, ry, rz, weld_state)
 
         weld_state = int(weld_state)
         assert weld_state == 1 or weld_state == 0

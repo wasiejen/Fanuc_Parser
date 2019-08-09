@@ -64,7 +64,7 @@ class Parser(object):
                     self.gui.button_showGraph.setDisabled(False)
             # TODO: txt file loader
             self.file_list = [file_path]
-            self.load_data_from_txt(file)
+            # self.load_data_from_txt(file)
             file.close()
             print(f"loaded data from file {self.file_name}")
 
@@ -390,25 +390,25 @@ class Parser(object):
         plt.xlabel("x")
         plt.ylabel("y")
 
-        # fig3 = plt.figure()
-        # ax = fig3.add_subplot(111, projection='3d')
-        # ax.set_xlabel("X")
-        # ax.set_ylabel("Y")
-        # plt.plot(x, y, z, "bo")
-        #
-        # # dataset = [np.array(el) for el in self.dataset]
-        # # np.arctan(gegenkathete / ankathete) / np.pi * 90
-        # # nr, x, y, z, rx, ry, rz = dataset
-        # xrx = np.array(x)+np.tan(np.array(ry)/180*np.pi) * rz
-        # yry = np.array(y)+np.tan(np.array(rx)/180*np.pi) * rz
-        # zrz = np.array(z)+np.array(rz)#/90*np.pi
-        #
-        # orient_x = zip(x, xrx)
-        # orient_y = zip(y, yry)
-        # orient_z = zip(z, zrz)
-        # orient_res = zip(orient_x, orient_y, orient_z)
-        # for x, y, z in orient_res:
-        #     plt.plot(x, y, z, "r-")
+        fig3 = plt.figure()
+        ax = fig3.add_subplot(111, projection='3d')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        plt.plot(x, y, z, "bo")
+
+        # dataset = [np.array(el) for el in self.dataset]
+        # np.arctan(gegenkathete / ankathete) / np.pi * 90
+        # nr, x, y, z, rx, ry, rz = dataset
+        xrx = np.array(x)+np.tan(np.array(ry)/180*np.pi) * rz
+        yry = np.array(y)+np.tan(np.array(rx)/180*np.pi) * rz
+        zrz = np.array(z)+np.array(rz)#/90*np.pi
+
+        orient_x = zip(x, xrx)
+        orient_y = zip(y, yry)
+        orient_z = zip(z, zrz)
+        orient_res = zip(orient_x, orient_y, orient_z)
+        for x, y, z in orient_res:
+            plt.plot(x, y, z, "r-")
 
         plt.show()
 
