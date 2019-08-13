@@ -247,7 +247,8 @@ class Parser(object):
             orientations = []
             counter = 0
             for distance, el in sorted_distances:
-                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 5:
+                # TODO: einstellen des counters
+                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 3:
                     norm_orient = (element - el) / distance
                     orientations.append(norm_orient)
                     counter += 1
@@ -269,9 +270,9 @@ class Parser(object):
 
                 x, y, z = res_orient
                 # um x - rx
-                dset[4] = angle_from_vertical(y, z)
+                dset[4] = round(angle_from_vertical(y, z), 3)
                 # um y - ry
-                dset[5] = angle_from_vertical(x, z)
+                dset[5] = round(angle_from_vertical(x, z), 3)
                 # # um z - rz
                 # # TODO: WIRD Z ueberhaupt benoetigt???
                 #hyp = np.sqrt(y*y+x*x)
@@ -280,6 +281,8 @@ class Parser(object):
 
                 # dset[4] = x
                 # dset[5] = y
+
+                # TODO: test
                 dset[6] = z
 
             new_dataset.append(dset)

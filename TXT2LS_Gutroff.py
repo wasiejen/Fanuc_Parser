@@ -53,12 +53,12 @@ class Gutroff(object):
             " ", "").replace("\n", "").split(",")
         nr, x, y, z, rx, ry, rz, weld_state = [float(i) for i in cleaned_dataset]
         assert_border_xyz = 500.
-        assert_border_rxryrz = 40.
-        min_rotation = 5. # degree
+        assert_border_rxryrz = 45.
+        min_rotation = 2. # degree
         # assert_border_AB = 80 # fuers erste # TODO
 
         def is_orientation_close(angle_a, angle_b):
-            border = 5. # degrees
+            border = 2. # degrees
             return border >= abs(angle_a - angle_b)
 
         # try:
@@ -81,28 +81,29 @@ class Gutroff(object):
         #     print(e)
         #     print(nr, x, y, z, rx, ry, rz, weld_state)
 
+        if abs(rx) <= min_rotation:
+            rx = 0.
+        if rx >= assert_border_rxryrz:
+            rx = assert_border_rxryrz
+        if rx <= -assert_border_rxryrz:
+            rx = -assert_border_rxryrz
 
+        if abs(ry) <= min_rotation:
+            ry = 0.
+        if ry >= assert_border_rxryrz:
+            ry = assert_border_rxryrz
+        if ry <= -assert_border_rxryrz:
+            ry = -assert_border_rxryrz
 
         try:
             assert nr >= 0
+            # linear
             assert x <= assert_border_xyz and x >= -assert_border_xyz
             assert y <= assert_border_xyz and y >= -assert_border_xyz
             assert z <= assert_border_xyz and z >= 0
             # rotations
-            assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
-            if abs(rx) <= min_rotation:
-                rx = 0.
-            if rx >= assert_border_rxryrz:
-                rx = assert_border_rxryrz
-            if rx <= -assert_border_rxryrz:
-                rx = -assert_border_rxryrz
             assert ry <= assert_border_rxryrz and ry >= -assert_border_rxryrz
-            if abs(ry) <= min_rotation:
-                ry = 0.
-            if ry >= assert_border_rxryrz:
-                ry = assert_border_rxryrz
-            if ry <= -assert_border_rxryrz:
-                ry = -assert_border_rxryrz
+            assert rx <= assert_border_rxryrz and rx >= -assert_border_rxryrz
             # assert rz <= 180 and rz >= -180
         except AssertionError as e:
             print(e)
