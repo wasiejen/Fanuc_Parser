@@ -3,6 +3,7 @@ import os
 # needed for 3d projection
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
+from Neutonian_search import newtonian_search
 
 import TXT2LS
 
@@ -153,6 +154,7 @@ class Parser(object):
                 dataset.append(elements)
         self.dataset = dataset
 
+
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
         NUMBER_OF_CLOSEST_POINTS = 1
@@ -188,84 +190,39 @@ class Parser(object):
             _, x, y, z, _, _, _, weld_en = dset
             # print(f"before: {dset}")
             element = (np.array((x, y, z)), weld_en)
+            print(f"element: {element}")
             if old_z is None:
                 old_z = z
-            layer_elements.append(element)
             if z != old_z:
-
                 old_z = z
-                # new layer
-                # print("# new layer #")
                 old_layer_elements = layer_elements
                 layer_elements = []
-
-                # unterteilung der strecken
-                elements_to_check = []
-                for el in old_layer_elements:
-                    # print(f"prev_el: {prev_el}")
-                    # print(f"el: {el}")
-                    # if weld_en == 1
-                    if el[1] == 1:
-                        # elements_to_check.append(el[0])
-                        if prev_el is not None:
-
-                            # gleichmaeßiges aufteilen auf die strecke
-                            strecken_vektor = el[0] - prev_el[0]
-                            strecken_distanz = np.linalg.norm(strecken_vektor)
-                            #print("prev_el0: ", prev_el[0])
-                            #print("el0: ", el[0])
-                            #print(strecken_vektor)
-
-
-
-                            if strecken_distanz >= 2*MIN_ABSTAND:
-                                teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
-
-                                # normierter orthogonaler vektor für seitenpunkte
-                                #nx, ny, nz = strecken_vektor/strecken_distanz
-                                #normierter_orth_strecken_vektor = np.array((ny, -nx, nz))
-                                #print(normierter_orth_strecken_vektor)
-
-                                # start at index 0, so starting point is added (in sum 3)
-                                # end at index teiler +1, so extra exit point added here (in sum 3)
-                                for i in range(0, teiler + 1):
-                                    zwischen_punkt = prev_el[0] + (strecken_vektor * i / teiler)
-                                    #zwischen_punkt_links = zwischen_punkt + normierter_orth_strecken_vektor * MIN_ABSTAND
-                                    #zwischen_punkt_rechts = zwischen_punkt - normierter_orth_strecken_vektor * MIN_ABSTAND
-                                    #print(zwischen_punkt)
-                                    elements_to_check.append(zwischen_punkt)
-                                    #elements_to_check.append(zwischen_punkt_links)
-                                    #elements_to_check.append(zwischen_punkt_rechts)
-
+                prev_el = None
+            layer_elements.append(element)
+            points_with_distances = []
+            # suche auf allen Strecken der vorherigen Ebene nach den minimalen Abstaenden zum neuen Punkt
+            for el in old_layer_elements:
+                if prev_el is None:
                     prev_el = el
-                    # elements_to_check.append(el[0])
-                # Debug Point
-                if self.debug:
-                    draw_points_in_3d(elements_to_check)    
-                
+                else:
+                    points_with_distances.append(newtonian_search(prev_el[0], el[0], element[0]))
 
-            element = element[0]  # weld info not needed anymore
-            # bestimmen der distance zu allen Punkten des alten Layers
-            temp_distances = [np.linalg.norm(element - temp_el) for temp_el in elements_to_check]
-            print("distances:" , temp_distances)
-            distances = zip(temp_distances, elements_to_check)
-            # print(f"distances: {distances}")
+            print(f"points with distances: {points_with_distances}")
+            def check_distance(data):
+                return data[1]
 
-            def check_first(data):
-                return data[0]
-
-            sorted_distances = sorted(distances, key=check_first) 
-            # print(f"sorted distances: {sorted_distances}")
+            sorted_distances = sorted(points_with_distances, key=check_distance)
+            print(f"sorted distances: {sorted_distances}")
 
             # die nächsten punkte als bezug nehmen
             # und die orientierung anhand derer bestimmen
             # gewichtung für die n#chsten punkte erhöhen
             orientations = []
             counter = 0
-            for distance, temp_el in sorted_distances:
+            for temp_el, distance in sorted_distances:
                 # TODO: einstellen des counters
                 if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= NUMBER_OF_CLOSEST_POINTS:
-                    norm_orient = (element - temp_el) / distance
+                    norm_orient = (element[0] - temp_el) / distance
                     orientations.append(norm_orient)
                     counter += 1
             print("Orientierungen: ", orientations)
@@ -274,8 +231,7 @@ class Parser(object):
                 
                 res_orient = sum(orientations)
                 res_orient = res_orient / np.linalg.norm(res_orient)
-                print("resultierende Orientierung: ", res_orient)
-                # print(f"RESULT-ORIENT: {res_orient}")
+                print(f"RESULT-ORIENT: {res_orient}")
 
                 # TODO: nochmal genau aufzeichnen!!!
                 def angle_from_vertical(gegenkathete: float, ankathete: float):
