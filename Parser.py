@@ -155,8 +155,8 @@ class Parser(object):
 
     def generate_orientation_from_xyz_coords(self):
         MIN_ABSTAND = 1  # in mm
-        # NUMBER_OF_CLOSEST_POINTS = 10
-        MAX_DISTANCE_CLOSEST_POINTS = 5  # in mm
+        NUMBER_OF_CLOSEST_POINTS = 1
+        MAX_DISTANCE_CLOSEST_POINTS = 2  # in mm
 
         # self.dataset  # x,y,z,e
         layer_elements = []
@@ -206,21 +206,36 @@ class Parser(object):
                     # print(f"el: {el}")
                     # if weld_en == 1
                     if el[1] == 1:
-                        elements_to_check.append(el[0])
+                        # elements_to_check.append(el[0])
                         if prev_el is not None:
 
                             # gleichmaeßiges aufteilen auf die strecke
                             strecken_vektor = el[0] - prev_el[0]
                             strecken_distanz = np.linalg.norm(strecken_vektor)
+                            #print("prev_el0: ", prev_el[0])
+                            #print("el0: ", el[0])
+                            #print(strecken_vektor)
+
+
 
                             if strecken_distanz >= 2*MIN_ABSTAND:
                                 teiler = int(np.ceil(strecken_distanz / MIN_ABSTAND))
 
+                                # normierter orthogonaler vektor für seitenpunkte
+                                #nx, ny, nz = strecken_vektor/strecken_distanz
+                                #normierter_orth_strecken_vektor = np.array((ny, -nx, nz))
+                                #print(normierter_orth_strecken_vektor)
+
                                 # start at index 0, so starting point is added (in sum 3)
                                 # end at index teiler +1, so extra exit point added here (in sum 3)
-                                for i in range(0, teiler +1):
+                                for i in range(0, teiler + 1):
                                     zwischen_punkt = prev_el[0] + (strecken_vektor * i / teiler)
+                                    #zwischen_punkt_links = zwischen_punkt + normierter_orth_strecken_vektor * MIN_ABSTAND
+                                    #zwischen_punkt_rechts = zwischen_punkt - normierter_orth_strecken_vektor * MIN_ABSTAND
+                                    #print(zwischen_punkt)
                                     elements_to_check.append(zwischen_punkt)
+                                    #elements_to_check.append(zwischen_punkt_links)
+                                    #elements_to_check.append(zwischen_punkt_rechts)
 
                     prev_el = el
                     # elements_to_check.append(el[0])
@@ -231,8 +246,9 @@ class Parser(object):
 
             element = element[0]  # weld info not needed anymore
             # bestimmen der distance zu allen Punkten des alten Layers
-            distances = [np.linalg.norm(element - el) for el in elements_to_check]
-            distances = zip(distances, elements_to_check)
+            temp_distances = [np.linalg.norm(element - temp_el) for temp_el in elements_to_check]
+            print("distances:" , temp_distances)
+            distances = zip(temp_distances, elements_to_check)
             # print(f"distances: {distances}")
 
             def check_first(data):
@@ -246,18 +262,19 @@ class Parser(object):
             # gewichtung für die n#chsten punkte erhöhen
             orientations = []
             counter = 0
-            for distance, el in sorted_distances:
+            for distance, temp_el in sorted_distances:
                 # TODO: einstellen des counters
-                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= 3:
-                    norm_orient = (element - el) / distance
+                if 0 < distance <= MAX_DISTANCE_CLOSEST_POINTS and counter <= NUMBER_OF_CLOSEST_POINTS:
+                    norm_orient = (element - temp_el) / distance
                     orientations.append(norm_orient)
                     counter += 1
-
+            print("Orientierungen: ", orientations)
             # einfaches bildes des durchschnittlichen orient vektors
             if len(orientations) > 0:
                 
                 res_orient = sum(orientations)
                 res_orient = res_orient / np.linalg.norm(res_orient)
+                print("resultierende Orientierung: ", res_orient)
                 # print(f"RESULT-ORIENT: {res_orient}")
 
                 # TODO: nochmal genau aufzeichnen!!!
