@@ -1,0 +1,9 @@
+# Specify filepatterns you want git to ignore.
+*.ls
+*.gcode
+*.xml
+*.pyc
+*.txt
+.*
+~*
+!/.gitignore
